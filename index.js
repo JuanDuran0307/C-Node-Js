@@ -38,17 +38,36 @@ console.log('Will read this first'); */
 //$$ Server
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`,'utf-8');
 const dataObj = JSON.parse(data);
+const TempOverview = fs.readFileSync(`${__dirname}/templates/overview.html`, 'utf-8')
+const TempCard = fs.readFileSync(`${__dirname}/templates/template-card.html`, 'utf-8')
+const TempProduct = fs.readFileSync(`${__dirname}/templates/product.html`, 'utf-8')
 
-const Server = http.createServer((req,res)=>{
+const server = http.createServer((req,res)=>{
     //console.log(req.url);
     const pathName = req.url;
+
+
+
     if(pathName === '/'|| pathName === '/overview'){
-        res.end("This is the OVERViEW")
+        res.writeHead(200,{'Content-type': 'text/html'});
+        const Cards = dataObj.map(ele => replaceTemplate(TempCard, ele)).join('');
+        const output = TempOverview.replace('{%PRODUCT_CARDS%}', Cards)
+        res.end(output)
+        
+
+
+
     }else if(pathName === '/product'){
         res.end('This is the PRODUCT')
+
+
+
     }else if(pathName === '/api'){
         res.writeHead(200,{'Content-type': 'application/json'});
         res.end(data);
+
+
+
     }else{
         res.writeHead(404,{
             'Content-type':'text/html',
@@ -58,6 +77,18 @@ const Server = http.createServer((req,res)=>{
     }
 
 })
-Server.listen(5000,'127.0.0.1',()=>{
+server.listen(5990,()=>{
     console.log(`Listennig yo requests on port: 5000`);
 })
+
+const replaceTemplate = (temp,product)=>{
+    let output = temp.replace(/{%PRODUCTNAME%}/g,product.productName)
+    output = output.replace(/{%IMAGE%}/g,product.image)
+    output = output.replace(/{%PRICE%}/g,product.price)
+    output = output.replace(/{%FROM%}/g,product.from)
+    output = output.replace(/{%QUANTITY%}/g,product.quantity)
+    output = output.replace(/{%DESCRIPTION%}/g,product.description)
+    output = output.replace(/{%ID%}/g,product.id)
+    if(!product.automatic) output = output.replace(/{%NOT_AUTOMATIC%}/g, 'not-automatic')
+    return output
+}
